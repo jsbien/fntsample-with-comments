@@ -1,0 +1,693 @@
+\tracinglostchars=3
+%
+% I have not found a package for long tables in the
+% multi-columne environment
+%
+\documentclass[final]{ltugboat}
+%\documentclass[final]{l3doc-TUB}
+\usepackage{fontspec}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage[hidelinks,pdfa]{hyperref}
+
+\usepackage{tabularx}
+% xltabular cannot be aliased:
+% ! File ended while scanning use of \TX@get@body.
+%\newenvironment{xltabular}{\begin{tabularx}}{\end{tabularx}}
+
+% avoid squashed Unicode ellipsis:
+\def\ldots{\tubdots}
+
+\def\fname{\texttt}
+
+\divide\abovecaptionskip by 2
+\renewcommand{\topfraction}{.9}  % don't go to a float page so soon:
+\renewcommand{\dbltopfraction}{.9}
+\renewcommand{\bottomfraction}{.7}
+\renewcommand{\textfraction}{.1}
+\renewcommand{\floatpagefraction}{.8}
+\renewcommand{\dblfloatpagefraction}{.8}
+
+%%% Start of metadata %%%
+
+\title{Creating annotated Unicode-like font charts}
+
+
+\author{Janusz S. Bień}
+\address{Warsaw, Poland}
+\netaddress{jsbien (at) uw.edu.pl}
+\personalURL{sites.google.com/view/jsbien}
+\ORCID{0000-0001-5006-8183}
+% To receive a physical copy of the TUGboat issue, please include the
+% mailing address we should use, as a comment if you prefer it not be printed.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Janusz Bień
+% Bacewiczówny 2 m. 45
+% 02-786 Warszawa
+% Poland
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% End of metadata %%%
+
+%  any other font will do
+%\setmainfont{TeX Gyre Pagella}
+% 
+% except Unicode equiv and approx are used. Let's just use math.
+\catcode`^^^^2261=13 \def^^^^2261{\ensuremath{\equiv}}
+\catcode`^^^^2248=13 \def^^^^2248{\ensuremath{\approx}}
+
+% This is a must:
+% https://github.com/psb1558/Junicode-font
+% 1.053beta of 22-08-?? or later
+\newfontfamily{\Junicode}{JunicodeTwoBeta-Regular.ttf}
+% not strictly necessary
+\newfontfamily{\JunicodeB}{JunicodeTwoBeta-Bold.ttf}
+
+% any font with Cyryllic will do
+%\newfontfamily{\Cyrillic}{DejaVu Serif}
+\newfontfamily{\Cyrillic}{NewCM10-Regular.otf}
+
+% http://quivira-font.com/
+%\newfontfamily{\Quivira}{Quivira}
+\newfontfamily{\Quivira}{Quivira.otf}
+% Any other font with the appropriate coverage will do
+% Characters needed:
+% U+2105 CARE OF
+% U+2B7A LEFTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE HORIZONTAL STROKE
+
+\ifx\undefined\XeTeXglyph
+  \def\XeTeXglyph{%
+    \directlua{
+      local index = token.scan_int()
+      local tfmdata = font.getfont(font.current())
+      if tfmdata.format \string ~= "opentype"
+         and tfmdata.format \string ~= "truetype" then
+          tex.error([[Cannot use \string\XeTeXglyph]] .. [[ with ]] ..
+                    tfmdata.name .. tfmdata.format \string ..
+                    [[; not opentype or truetype]])
+      end
+      for slot, char in pairs(tfmdata.characters) do
+          if char.index == index then
+              tex.print(utf.char(char.unicode))
+              return
+          end
+      end
+    }}%
+  %
+% sadly, the above doesn't work. luatex output is still blank.
+\newcommand{\VSone}{\lower.1em\hbox{\includegraphics{vsone-xe-crop.pdf}}}
+\newcommand{\Fzerosone}{\lower.15em\hbox{\includegraphics{f0001-xe-crop.pdf}}}
+\else
+% any font with the glyph will do:
+\newcommand{\VSone}{{\fontspec{NotoSansManichaean-Regular.ttf}\XeTeXglyph58}}
+% /usr/share/fonts/truetype/noto/NotoSansManichaean-Regular.ttf: Noto Sans Manichaean:style=Regular
+% https://fonts.google.com/noto/specimen/Noto+Sans+Manichaeantug$ 
+\newcommand{\Fzerosone}{\sgl{󰀁}}
+\fi
+
+\newcommand{\uname}[1]{{\textsc{\MakeLowercase{#1}}}}
+\newcommand{\ucode}[1]{{\acro{U+#1}}}
+
+% glyph
+\newcommand{\sgl}[1]{{\Junicode\addfontfeature{StylisticSet=10}#1}}
+\newcommand{\sglQ}[1]{{\Quivira#1}}
+
+
+% Junicode input
+\newcommand{\Ji}[1]{{\JunicodeB #1}}
+
+%\usepackage{xltabular}
+%\usepackage{unicodefonttable}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  Printing annotated font tables in the layout following the Unicode
+  standard documentation is discussed. Existing tools are presented and
+  desirable but missing features are proposed.
+\end{abstract}
+
+\section{Unicode charts}
+\label{sec:unicode-charts}
+
+In this article, we will discuss the primary Unicode
+charts;\footnote{\tbsurl{unicode.org/charts}} the secondary charts
+describing the variation sequences, in particular those belonging to
+Ideographic Variation Database, are outside the scope of our interest.
+
+All the charts are produced with the Unibook formatting
+software,\footnote{\tbsurl{unicode.org/unibook}} supplied by
+\acro{ASMUS}, Inc.\ (a company owned by Asmus Freytag, Technical Vice
+President of the Unicode Consortium from 1991 to 2007). A version of
+Unibook is available free of charge (but with a rather complicated
+license); it is used to prepare proposals of new characters, as well as
+the full standard. The program runs on several versions of \acro{MS}
+Windows. The fonts used to print the characters themselves in the charts
+come from many sources and are not, in general, free in any
+sense.\footnote{\tbsurl{unicode.org/charts/fonts.html}}
+
+The charts proper are followed by various annotations. The source of
+annotations, at least in principle, is the
+\fname{NamesList.txt}\footnote{\tbsurl{unicode.org/Public/UNIDATA/NamesList.txt}}
+file belonging to the Unicode Character Database. Its header states:
+\textit{This file is semi-automatically derived from UnicodeData.txt
+  and a set of manually created annotations using a script to select
+  or suppress information from the data file.} The documentation of
+the format of the file is
+provided.\footnote{\tbsurl{unicode.org/Public/UCD/latest/ucd/NamesList.html}}
+However, there are systematic discrepancies between the content of the
+file and the charts, so somewhere in the workflow additional
+processing is performed.
+
+As of the standard version 15.0, there are the following annotations
+used (examples are given later):
+
+\begin{itemize}
+\item Lines starting with • (\ucode{2022} \uname{BULLET}) are just comment lines.
+\item Lines starting with = (\ucode{003D} \uname{EQUALS SIGN}) are
+  alias lines.
+\item Lines starting with ※ (\ucode{203B} \uname{REFERENCE MARK}) are
+  formal alias lines.\footnote{Formal aliases are used for control
+    characters, which have no glyphs and official names. Another use
+    is correcting name mistakes; because of the stability principle,
+    erroneous names are not removed from the standard, but the correct
+    names are added as a formal alias.}
+\item Lines starting with → (\ucode{2192} \uname{RIGHTWARDS ARROW})
+  contain cross-references to related characters.
+\item Lines starting with ≡ (\ucode{2261} \uname{IDENTICAL TO}) are
+  used for precomposed characters and contain the list of characters
+  which together compose the character in question.\footnote{Some
+    characters `decompose' into another single character, but this is
+    another story; the most well-known example is \ucode{212B}
+    \uname{ANGSTROM SIGN}, which `decomposes' into \ucode{00C5}
+    \uname{LATIN CAPITAL LETTER A WITH RING ABOVE}.}
+\item Lines starting with ≈ (\ucode{2248} \uname{ALMOST EQUAL TO})
+  are used for so-called compatibility
+  characters\footnote{\raggedright See
+  \tbsurl{en.wikipedia.org/wiki/Unicode_compatibility_characters}, for
+  example.}
+  and show the compatibility decomposition of the character (this
+  relation is defined by enumeration).
+\item Lines starting with \~{} (\ucode{007E} \uname{TILDE}) describe
+  registered variation sequences.
+\end{itemize}
+
+The file also contain commands to control printing titles, subtitles,
+block headers, various subheaders and notices.
+
+
+\section{The fntsample tool and its extension}
+\label{sec:fntsample-tool-its}
+
+In 2007 Eugeniy Meshcheryakov 
+(the original spelling seems to be {\Cyrillic Евгений Мещеряков})
+released the first version of the \textsf{fntsample}
+program.\footnote{\tbsurl{github.com/eugmes/fntsample}} The
+tool was developed for the DejaVu Fonts project.
+
+ \begin{figure}
+   \centering
+   \includegraphics[width=.99\hsize]{Junicode15p-sample-crop.pdf}
+   \caption{\raggedright Output of\newline
+\texttt{fntsample -f JunicodeTwoBeta-Regular.ttf \newline
+-i 0xf0000- -o sample.pdf}}
+   \label{fig:fntsample}
+ \end{figure}
+
+ The charts it generates resemble those of the Unicode standard;
+ see Fig.~\ref{fig:fntsample}. In particular, they include glyphs for
+ the characters which are invisible by definition, such as \VSone\
+ (\ucode{FE00} \uname{VARIATION SELECTOR\mbox{-}1}), if the font contains
+ them.
+
+ In 2013 a student of mine, Paweł Parafiński, accepted the task to made
+ the samples even more similar to the Unicode charts by supplementing
+ them with annotations. He solved the problem in two steps. First he
+ created a parser for the \fname{NamesList.txt} file which converted
+ it into simple \XML. In the second step he extended \textsf{fntsample}
+ to print the additional information from the \XML\ file.
+
+ The program is orphaned, but the repositories are still
+ available;\footnote {Now at
+   \tbsurl{github.com/jsbien/fntsample-with-comments} and
+   \tbsurl{github.com/jsbien/ucd_xml_parser}.} in
+ particular, this allows reporting the issues. The most annoying problem is
+the  inability to break long character names. There was also a problem with
+ the parser, which was coded in the now-obsolete Python 2. I managed
+ to adapt it to Python 3 (by trial and error, as I am not a
+ programmer).
+
+ Unfortunately the parser ignores some elements of the
+ \fname{NamesList.txt} file, as at the time of its design
+ they seemed not to be needed.
+ 
+
+\section{Frank Mittelbach's unicodefonttable}
+\label{sec:mitt-unic}
+Frank Mittelbach's \textsf{unicodefonttable} package is available from
+\CTAN\ and the usual distributions; its source repository is
+  \tbsurl{github.com/frankmittelbach/fmitex-unicodefonttable}. It
+provides a \LaTeX\ style file to include a font table in a document and, an
+interactive standalone version to produce a font table as a separate
+document.
+Tables can be supplemented by block names and user captions;
+tables can be limited to selected blocks.
+
+The \textsf{unicodefonttable} package is implemented using the
+\textsf{fontspec} package, which is an advantage, as this allows using
+all font features which the package supports. The source of the Junicode font manual
+\cite{baker22:Junicode}, typeset with \XeLaTeX{}, gives extensive
+examples of the usage of font features with the \textsf{fontspec}
+package.\tbsurlfootnote{github.com/psb1558/Junicode-font} They are
+also discussed in the manual~\cite[p.~13]{baker22:Junicode}:
+\begin{quote}
+  Many OpenType features produce different outcomes depending on an
+  index passed to an application’s layout engine along with the
+  feature tag. Different applications have different ways of entering
+  this index: consult your application’s documentation. Here, the
+  index is recorded in brackets after the feature tag. Users of
+  \textsf{fontspec} (with \XeLaTeX{} or \LuaTeX{}) should also be aware that
+  \textsf{fontspec} indexes start at zero while OpenType indexes start at
+  one. Therefore all index numbers listed in this document must be
+  reduced by one for use with fontspec.
+\end{quote}
+For referencing a specific value of a feature we
+follow~\cite{baker22:Junicode}, e.g., \textsf{cv02[1]} means the feature \textsf{cv02}
+(character variant number~2) with the index~1; on the other hand
+\textsf{ss10} is an example of a feature (stylistic set number 10) which does
+not require an index but which is just on or off.
+
+It is worth noting that \textsf{fontspec}, and hence also
+\textsf{unicodefonttable}, if used with \LuaLaTeX, allow for the
+little known ``raw feature''
+\texttt{-invisible},\footnote{\tbsurl{github.com/latex3/luaotfload/issues/63}}
+allowing printing glyphs for characters which are invisible in
+principle (mentioned earlier; see also, for example, \cite{L2/02-368})
+if the font contains them.\footnote{\raggedright I learned this from
+  the author; see
+  \tbsurl{github.com/FrankMittelbach/fmitex-unicodefonttable/issues/5}.}
+
+Figure \ref{fig:plane15} shows the output of the following:
+\begin{verbatim}
+\displayfonttable
+  [range-start=F0000,range-end=FFFFF,
+   nostatistics,noheader,hex-digits=block]
+  {JunicodeTwoBeta-Regular.ttf}
+\end{verbatim}
+
+% Does not work for me:
+% cf. https://github.com/FrankMittelbach/fmitex-unicodefonttable/issues/7
+% % ------- fix for longtable wanting one column (might move into unicodefonttable)
+% \AddToHook{cmd/displayfonttable/before}{\begingroup\UseName{@twocolumnfalse}}  
+% \AddToHook{cmd/displayfonttable/after}{\endgroup}
+% % ------- fix for longtable wanting one column (might move into unicodefonttable)
+
+% SLOW!
+%% \begin{figure*}
+%%   \centering
+%% \displayfonttable
+%% [range-start=F0000,range-end=FFFFF,
+%%  nostatistics,noheader,hex-digits=block]
+%% {JunicodeTwoBeta-Regular.ttf}
+%%   \caption{\textsf{unicodefonttable}: plane 15 in JunicodeTwoBeta-Regular.ttf}
+%%    \label{fig:plane15}
+%% \end{figure*}
+\begin{figure}
+\includegraphics[width=\hsize]{Junicode_plane15-crop}
+\caption{\raggedright \textsf{unicodefonttable} output for plane 15 in
+\texttt{JunicodeTwoBeta-Regular.ttf}}
+\label{fig:plane15}
+\end{figure}
+
+\section{David M. Jones' \acro{STIX} charts}
+\label{sec:david-jones-stix}
+The charts for the \acro{STIX} fonts (\textit{OpenType Unicode fonts for
+  Scientific, Technical, and Mathematical
+  texts}\footnote{\tbsurl{https://github.com/stipub} and
+  \tbsurl{https://www.stixfonts.org}}) are typeset by David~M. Jones
+with \XeLaTeX{} from source generated by a Perl script. The principal
+part of the charts has the same layout as the Unicode charts, so this
+technique could be used to replace \textsf{fntsample} (the additional
+part of the charts describes the OpenType features, which is only
+indirectly related to the present paper). Figure~\ref{fig:STIX} shows
+the page for the Greek and Coptic block, starting at \ucode{037}. These
+charts use some additional conventions, e.g., red (grayscaled for print)
+is used for characters not directly supported but synthesized by a
+Unicode-aware shaping engine; this is shown with characters \ucode{03D3}
+and \ucode{03D4} in the figure; \ucode{0374} is another example of a
+character which ``decomposes'' into (is substituted by) another single
+character.\footnote{\tbsurl{https://github.com/stipub/stixfonts/issues/248}}
+
+\begin{figure}
+\includegraphics[width=\hsize,trim=158 85 158 125,clip]
+                {STIXTwoText-Regular9.pdf}
+\caption{\raggedright A page from
+\texttt{STIXTwoText-Regular.pdf} (headers and footers are omitted).}
+\label{fig:STIX}
+\end{figure}
+
+At present neither the \XeLaTeX\ source nor the Perl script are
+available
+publicly.\footnote{\tbsurl{https://github.com/stipub/stixfonts/issues/247}}
+
+\section{Typesetting character annotations}
+\label{sec:types-char-adnot}
+
+Although in the Unicode standard the character annotations occur
+immediately after the relevant glyph tables, it is not necessary to
+follow the standard in this respect. Separately provided annotations
+can be even more convenient.
+
+Typesetting individual annotations in a way approximating the Unicode
+charts is not difficult. After some research I decided to use
+\textsf{xltabular}, which handles multipage tables (unfortunately it
+doesn't work in a multicolumn environment).  The examples in
+figures~\ref{fig:std}--\ref{fig:variation} are typeset using code
+like this (showing just the first line; formatting has been slightly
+changed):
+\begin{verbatim}
+\begin{xltabular}{1.0\linewidth}%
+                 {lll>{\raggedright}X}
+0000 & &\multicolumn{2}{l}{<control>}\\
+&    & &※& NULL\\
+\end{verbatim}
+
+\begin{figure*}
+\frenchspacing
+
+\begin{tabularx}{1.0\linewidth}%
+  {lll>{\raggedright\arraybackslash}X}
+0000 &  &\multicolumn{2}{l}{<control>}\\
+&&    ※& \uname{NULL}\\
+  0030 & 0 &\multicolumn{2}{l}{\uname{DIGIT ZERO}}\\
+&&    \~{}& 0030 FE00 \sgl{{\addfontfeature{Numbers=SlashedZero}0}} short diagonal stroke form\\
+  0040 & @ &\multicolumn{2}{l}{\uname{COMMERCIAL AT}}\\
+&&    =& at sign\\
+  0104 & \char"0104 %ą 
+  &\multicolumn{2}{l}{\uname{LATIN CAPITAL LETTER A WITH OGONEK}}\\
+&&    ≡& 0041 A 0328 \sgl{◌̨}\\
+   2105 & \sglQ{℅} &\multicolumn{2}{l}{\uname{CARE OF}}\\
+ &&    ≈& 0063 c 002F / 006F o\\
+ 2B7A & \sglQ{⭺} &\multicolumn{2}{l}{\uname{LEFTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE HORIZONTAL STROKE}}\\
+ &&    ※& \uname{LEFTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE VERTICAL STROKE}\\
+  A7C1 & \sgl{ꟁ} &\multicolumn{2}{l}{\uname{LATIN SMALL LETTER OLD POLISH O}}\\
+&&    •& used in Old Polish as a nasal vowel\\
+&&    →& 00F8 ø \uname{LATIN SMALL LETTER O WITH STROKE}\\
+\end{tabularx}
+\caption{Typesetting standard character annotations.}
+\label{fig:std}
+\bigskip
+
+\begin{tabularx}{1.0\linewidth}%
+  {lll>{\raggedright\arraybackslash}X}
+  F1C8 & \sgl{◌} & \multicolumn{2}{l}{\uname{COMBINING ABBREVIATION MARK ZIGZAG ABOVE CURLY FORM}}\\
+  && •& \acro{MUFI} since v.2\\
+  E8AF & \sgl{} & \multicolumn{2}{l}{\uname{LATIN SMALL LIGATURE LONG S L WITH STROKE}}\\
+&&    •& \acro{MUFI} in v.4 at E8DF, later moved to E8AF\\
+&&    •& used in old Polish\\
+  F0001 & \Fzerosone & \multicolumn{2}{l}{\uname{LATIN SMALL LETTER A WITH STROKE THROUGH TERMINAL}}\\
+ &&   •& supported in Junicode Beta since Jun.~30, 2020\\
+ &&   •& used in old Polish\\
+ &&       →& 0105 ą  \uname{LATIN SMALL LETTER A WITH OGONEK}\\
+ &&       →& 2C65  \sgl{ⱥ} \uname{LATIN SMALL LETTER A WITH STROKE}\\
+\end{tabularx}
+\caption{Some examples from Unicode's Private Use Area.}
+\label{fig:pua}
+\bigskip
+
+\begin{tabularx}{1.0\linewidth}%
+  {lll>{\raggedright\arraybackslash}X}
+  0062 & b &\multicolumn{2}{l}{\uname{LATIN SMALL LETTER B}}\\
+       &&    \~{}& supported in Junicode Beta since Aug.~25, 2022 with \textsf{ss10} on: 0062 b E0070 {\Ji{\&\_\_p;}} E0073 \Ji{{\&\_\_s;}} {\sgl{b\&\_\_p;\&\_\_s;}} old Polish \textit{b quadratum}\\
+  0105 & ą & \multicolumn{2}{l}{\uname{LATIN SMALL LETTER A WITH OGONEK}}\\
+       &&	•& Polish, Lithuanian, \ldots\\
+       &&    ≡& 0061 a 0328 \sgl{◌̨}\\
+       &&    \~{}& supported in Junicode Beta since Jun.~30, 2020:\newline
+                   0104 ą  \textsf{cv02[1]} \Fzerosone\
+                   \uname{LATIN SMALL LETTER A WITH STROKE THROUGH TERMINAL}\\
+\end{tabularx}
+\caption{Adapting output to tag variation sequences.}
+\label{fig:variation}
+\bigskip\bigskip
+\end{figure*}
+
+The Unicode conventions can be used easily to describe Private Use
+Area characters, e.g., those from Medieval Unicode Font
+Initiative\tbsurlfootnote{mufi.info} (other interesting initiatives are
+\acro{CONSCRIPT}\footnote{\tbsurl{www.kreativekorp.com/ucsur}} and
+\acro{LINCUA}\footnote{\tbsurl{bit.ly/2XVTzRL-LINCUA}}), or from a
+specific font.
+%\cite{baker22:Junicode}.
+Fig.~\ref{fig:pua} shows some examples.
+
+The line format for the registered variation sequences can be easily
+adapted to tag variation sequences (see, for example, \cite{JSB22}) and
+font specific information, as shown in Fig.~\ref{fig:variation}.
+
+The information about the font can be skipped when not needed.
+
+\section{Providing character annotations}
+\label{sec:prov-char-adnot}
+
+In addition to the \textsf{ttx} program discussed later, the other tool I know of to list font features in a human-readable form is
+\textsf{layout-features.py},\footnote{\tbsurl{github.com/fonttools/fonttools/blob/8ab6af03c89726cf80ca3c4b755ae1bd0038b5da/Snippets/layout-features.py};
+see also
+\tbsurl{github.com/fonttools/fonttools/discussions/2873}.\raggedright} but
+its simple output does not contain the information needed for our
+purposes (see Fig.~\ref{fig:layout-features}).
+
+
+ \begin{figure}
+   \centering
+\begin{verbatim}[\small]
+Table: GSUB
+  Script: DFLT
+    Language: default
+      Feature: aalt
+        Lookups: 0,1
+      Feature: c2sc
+        Lookups: 204
+...
+      Feature: ccmp
+        Lookups: 50,53,55,56,57,58,59,60,61,...
+      Feature: cv01
+        Lookups: 110
+      Feature: cv02
+        Lookups: 111
+...
+\end{verbatim}
+   \caption{\raggedright Some of the output from
+\texttt{layout-features.py JunicodeTwoBeta-Regular.ttf}}
+   \label{fig:layout-features}
+ \end{figure}
+
+In 2018 a feature request was submitted to the \textsf{fntsample}
+repository entitled \textit{Suggestion:\ enable printing glyphs not
+assigned to a unicode
+slot},\footnote{\tbsurl{github.com/eugmes/fntsample/issues/11}}
+but there was no follow up. In 2021 a similar feature request was
+made for
+\textsf{unicodefonttable}.\footnote{\raggedright
+\tbsurl{github.com/FrankMittelbach/fmitex-unicodefonttable/issues/2}} The
+answer, in my view correct, was that this should be a
+separate project.
+
+
+We focus here on discussing the annotations in \textsf{ttx}'s \XML\ form
+(but the
+fork of \textsf{layout-features.py} may also be considered). How to
+process this information further is another question outside the scope
+of this note. One possible approach is to continue the work on the
+\textsf{fntsample} fork.  Another possibility is to use \XSLT\ to convert
+to \LaTeX{} (running under \XeTeX{}  or \LuaTeX); this is a
+general recommendation of
+David Carlisle, the author of
+\textsf{xmltex}.\footnote{\tbsurl{tex.stackexchange.com/questions/562856}}
+
+
+The Unicode standard is updated every year, so we need a way to handle
+the update conveniently.  Conversion to \XML\ with Parafiński's parser,
+after some minor improvements of the program, seems a satisfactory
+solution.
+
+In the Private Use Area, the updates to Medieval Unicode Font Initiative
+recommendation, for example, don't have a stable specific form. The
+data, e.g., as prepared for Parafi\'nski's program, have to be
+updated by hand.
+
+
+One way to extract the interesting information from the font which
+seems to be worth consideration consists of using the \textsf{ttx} plain text
+format of OpenType\slash TrueType fonts produced by the program of the
+same name.\footnote{\tbsurl{https://github.com/fonttools/fonttools}; see also
+\cite[p.~22]{haralambous07:_fonts_encod}.}
+
+To make the output more human readable, by default \texttt{ttx} uses the
+character names from the file \fname{UnicodeData.txt} belonging to the
+Unicode Character Database. There is, however, an option to provide a
+different file for the data. One occasion for this is a new version of
+the standard which has not yet migrated to the relevant software
+libraries. The second, more important for us, is to provide names of the
+\acro{PUA} characters, including \acro{MUFI}, prepared already in the
+appropriate format by Rebecca~G.
+Bettencourt\footnote{\tbsurl{kreativekorp.com/charset/PUADATA/PUBLIC/MUFI}}
+(updates are probably needed).
+
+OpenType/TrueType fonts consist of several tables and subtables,
+which \textsf{ttx} converts to \XML\ (in the examples
+below, the formatting is slightly changed).
+% formatting changed to fit narrow columns. Can be undone.
+Variation
+and tag sequences are represented in the same way as other
+ligatures. For example, in \fname{NotoSans-Regular.ttf} the slashed
+zero variation sequence (surprisingly few fonts support this variation
+sequence), stored in the \texttt{GSUB} (Glyph Substitution) table, looks
+like this:
+
+\begin{verbatim}[\small]
+<GSUB>
+  <Version value="0x00010000"/>
+  ...
+  <LookupList>
+    <!-- LookupCount=43 -->
+    <Lookup index="2">
+      ...
+      <!-- SubTableCount=1 -->
+      <LigatureSubst index="0" Format="1">
+        <LigatureSet glyph="zero">
+          <Ligature components="uniFE00" 
+                    glyph="zero.slash"/>
+        </LigatureSet>
+      </LigatureSubst>
+    </Lookup>
+    ...
+   </LookupList>
+</GSUB>
+\end{verbatim}
+
+To discover what \texttt{uniFE00} definitively means, we consult
+the \texttt{cmap} (Character to Glyph Index Mapping) table:
+
+\begin{verbatim}[\small]
+ <cmap>
+  <tableVersion version="0"/>
+  <cmap_format_4 platformID="0" 
+                 platEncID="3" 
+                 language="0">
+    ...
+      <map code="0xfe00" name="uniFE00"/>
+           <!-- VARIATION SELECTOR-1 -->
+  </cmap_format_4>
+  ...
+</cmap>
+\end{verbatim}
+The comments are provided by the \textsf{ttx} program.
+
+As for \texttt{zero.slash}, we can use the auxiliary table
+\texttt{GlyphOrder} produced by \textsf{ttx} to find the font slot
+number of the character:
+
+\begin{verbatim}[\small]
+  <GlyphOrder>
+    <!-- The 'id' attribute is only for humans; 
+         it is ignored when parsed. -->
+    ...
+    <GlyphID id="2581" name="zero.slash"/>
+    ..
+   </GlyphOrder>
+\end{verbatim}
+
+The slot number can be used to typeset the character; in \XeTeX{} the
+appropriate command is \verb|\XeTeXglyph|.\footnote{\raggedright This
+was kindly pointed out to me by Ulrike Fischer on the \XeTeX\ mailing
+list
+(\tbsurl{tug.org/pipermail/xetex/2022-October/028105.html}).
+\font\EdNoteFont = cmu10 at 1em
+[\xEdNote{For Lua\TeX, some Lua code can achieve the same result; see
+\tbsurl{https://tex.stackexchange.com/questions/120736}.]}}
+
+Let's now consider another example, namely \textit{b~quad\-ra\-tum} from the
+Junicode font mentioned above. The tag sequence is active only when stylistic set 10 is selected, so the ligature has to be embedded in the appropriate \texttt{FeatureElement}:
+
+\begin{verbatim}[\small]
+<GSUB>
+  <Version value="0x00010000"/>
+  ...
+  <FeatureList>
+    <!-- FeatureCount=155 -->
+    ...
+    <FeatureRecord index="140">
+      <FeatureTag value="ss10"/>
+      <!-- Character Entities 
+           for Combining Marks -->
+      <Feature>
+        <FeatureParamsStylisticSet>
+          <Version value="0"/>
+          <UINameID value="256"/>  
+                    <!-- Entities -->
+        </FeatureParamsStylisticSet>
+        <!-- LookupCount=3 -->
+        ...
+        <LookupListIndex index="2" 
+                         dopiskivalue="71"/>
+      </Feature>
+    </FeatureRecord>
+  ...
+  </FeatureList>
+  <LookupList>
+    <!-- LookupCount=234 -->
+    ...
+    <Lookup index="71">
+      <LookupType value="4"/>
+      <LookupFlag value="16"/>
+                 <!-- useMarkFilteringSet -->
+      <!-- SubTableCount=1 -->
+      <LigatureSubst index="0" Format="1">
+        ...
+        <LigatureSet glyph="b">
+          <Ligature components="e.tag,n.tag" 
+                    glyph="b.enlarged"/>
+          <Ligature components="p.tag,l.tag" 
+                    glyph="b.p02"/>
+          <Ligature components="p.tag,s.tag" 
+                    glyph="b.p01"/>
+        </LigatureSet>
+        ...
+      </LigatureSubst>
+      <MarkFilteringSet value="1"/>
+    </Lookup>
+  ...
+  </LookupList>
+</GSUB>
+\end{verbatim}
+
+In general the glyph selection can depend on a script, a language, and
+user-selected features, which make the font structure quite
+complicated. A program intended to extract all the information about a
+font has to take everything into account.
+
+\section{Final remark}
+\label{sec:final-remarks}
+
+I hope this note will provide inspiration to a reader or readers with
+appropriate skills and in some future we will see a tool for
+printing annotated font tables in a nice fashion.
+
+\def\url{\tbsurl}
+\SetBibJustification{\raggedright}
+\bibliographystyle{tugboat}
+%\nocite{book-minimal}      % make the bibliography non-empty
+\bibliography{JSBfnts}       % xampl.bib comes with BibTeX
+
+\makesignature
+\end{document}
+
+         
+%%% Local Variables:
+%%% mode: latex
+%%% ispell-local-dictionary: "english"
+%%% TeX-master: t
+%%% coding: utf-8-unix
+%%% TeX-PDF-mode: t
+%%% TeX-engine: xetex
+%%% End:
